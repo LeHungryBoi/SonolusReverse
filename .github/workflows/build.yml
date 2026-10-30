@@ -1,0 +1,181 @@
+name: Build patched Sonolus APK
+
+# How this works
+# ---------------
+# • Scheduled every 6h: fetches sonolus.com, extracts the latest Sonolus
+#   version from the download link, and builds a patched APK only if no
+#   release for that version (built from the current upstream source) exists.
+# • Manual run (Actions → Run workflow): optionally type a version to force
+#   a build (handy when the game tells you to update and auto-detect misses).
+#
+# Setup on your fork:
+#   1. Fork repinek/SonolusReverse to your account (keep it PUBLIC so the
+#      release asset is downloadable without auth).
+#   2. Enable Actions, and make sure scheduled workflows are enabled
+#      (GitHub disables scheduled workflows in forks by default).
+#   3. The workflow builds from upstream/master automatically — you never
+#      need to sync your fork; only this file (and your README) live on it.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Sonolus version, e.g. 1.1.5. Leave empty to auto-detect from sonolus.com"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-patched-apk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout fork (loads this workflow)
+        uses: actions/checkout@v7
+
+      - name: Fetch upstream source
+        id: up
+        run: |
+          git remote add upstream https://github.com/repinek/SonolusReverse.git \
+            || git remote set-url upstream https://github.com/repinek/SonolusReverse.git
+          git fetch upstream master
+          echo "sha=$(git rev-parse --short upstream/master)" >> "$GITHUB_OUTPUT"
+
+      - name: Detect latest Sonolus version
+        id: ver
+        run: |
+          INPUT="${{ github.event.inputs.version }}"
+          if [ -n "$INPUT" ]; then
+            VER="$INPUT"
+          else
+            VER=$(curl -fsSL https://sonolus.com/ \
+              | grep -oE 'Sonolus_[0-9]+\.[0-9]+\.[0-9]+\.apk' | head -1 \
+              | sed 's/^Sonolus_//; s/\.apk$//')
+          fi
+          if [ -z "$VER" ]; then
+            echo "::error::Could not determine Sonolus version. Re-run manually and enter the version."
+            exit 1
+          fi
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "Targeting Sonolus $VER"
+
+      - name: Check whether a build is needed
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER="${{ steps.ver.outputs.version }}"
+          TAG="sonolus-$VER"
+          SHA="${{ steps.up.outputs.sha }}"
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            if gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json body -q .body | grep -q "$SHA"; then
+              echo "needed=false" >> "$GITHUB_OUTPUT"
+              echo "Sonolus $VER already built from $SHA - nothing to do."
+            else
+              echo "needed=true" >> "$GITHUB_OUTPUT"
+              echo "Sonolus $VER exists but upstream changed ($SHA) - rebuilding."
+            fi
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "No build for Sonolus $VER yet - building."
+          fi
+
+      - name: Set up Node.js
+        if: steps.check.outputs.needed == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Set up Python
+        if: steps.check.outputs.needed == 'true'
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Set up JDK
+        if: steps.check.outputs.needed == 'true'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        if: steps.check.outputs.needed == 'true'
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android build-tools (zipalign/apksigner needed by fgi)
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          sdkmanager "build-tools;34.0.0"
+          echo "$SDK/build-tools/34.0.0" >> "$GITHUB_PATH"
+
+      - name: Install fgi (Python, in a venv to avoid PEP 668)
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements_build.txt
+          fgi --help
+
+      - name: Checkout upstream source for build
+        if: steps.check.outputs.needed == 'true'
+        run: git checkout upstream/master
+
+      - name: Build SonolusReverse script
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          npm ci
+          npm run build:nobump
+
+      - name: Download Sonolus APK
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          wget -q "https://download.sonolus.com/Sonolus_${{ steps.ver.outputs.version }}.apk"
+          ls -lh "Sonolus_${{ steps.ver.outputs.version }}.apk"
+
+      - name: Patch APK with frida-gadget script
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          . .venv/bin/activate
+          fgi -i "Sonolus_${{ steps.ver.outputs.version }}.apk" \
+              -t script -l dist/agent.js \
+              -o "SonolusReverse_${{ steps.ver.outputs.version }}.apk"
+
+      - name: Upload artifact
+        if: steps.check.outputs.needed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: SonolusReverse_${{ steps.ver.outputs.version }}
+          path: SonolusReverse_${{ steps.ver.outputs.version }}.apk
+          retention-days: 90
+
+      - name: Publish release
+        if: steps.check.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER="${{ steps.ver.outputs.version }}"
+          TAG="sonolus-$VER"
+          SHA="${{ steps.up.outputs.sha }}"
+          APK="SonolusReverse_$VER.apk"
+          NOTES="Sonolus ${VER} patched with SonolusReverse @ ${SHA}. Auto-built by GitHub Actions."
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" -R "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --notes "$NOTES"
+          else
+            gh release create "$TAG" "$APK" -R "$GITHUB_REPOSITORY" \
+              --title "Sonolus $VER (SonolusReverse patched)" \
+              --notes "$NOTES"
+          fi
