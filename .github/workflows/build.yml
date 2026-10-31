@@ -7,6 +7,8 @@ name: Build patched Sonolus APK
 #   release for that version (built from the current upstream source) exists.
 # • Manual run (Actions → Run workflow): optionally type a version to force
 #   a build (handy when the game tells you to update and auto-detect misses).
+# • When a run finds nothing to build, it deletes its own run record so the
+#   Actions list only keeps runs that actually produced a build.
 #
 # Setup on your fork:
 #   1. Fork repinek/SonolusReverse to your account (keep it PUBLIC so the
@@ -28,6 +30,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: build-patched-apk
@@ -179,3 +182,9 @@ jobs:
               --title "Sonolus $VER (SonolusReverse patched)" \
               --notes "$NOTES"
           fi
+
+      - name: Remove run record (nothing to build)
+        if: steps.check.outputs.needed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X DELETE /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}
