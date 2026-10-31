@@ -183,8 +183,13 @@ jobs:
               --notes "$NOTES"
           fi
 
+      # GitHub forbids a run from deleting itself via the default GITHUB_TOKEN,
+      # so we use a PAT stored as the DELETE_TOKEN secret instead.
+      # Without the secret this step is skipped-safe (continue-on-error) and
+      # the run simply stays in the list.
       - name: Remove run record (nothing to build)
         if: steps.check.outputs.needed == 'false'
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.DELETE_TOKEN }}
         run: gh api -X DELETE /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}
