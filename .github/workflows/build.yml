@@ -162,7 +162,7 @@ jobs:
         with:
           name: SonolusReverse_${{ steps.ver.outputs.version }}
           path: SonolusReverse_${{ steps.ver.outputs.version }}.apk
-          retention-days: 90
+          retention-days: 1
 
       - name: Publish release
         if: steps.check.outputs.needed == 'true'
