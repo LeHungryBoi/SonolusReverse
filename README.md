@@ -4,9 +4,10 @@
 > If you enjoy Sonolus, please consider supporting Sonolus by purchasing VIP or gems in-game.  
 > If you want to contact me: see [Contact Me](#contact-me)
 
-> [!WARNING]
-> Following a request from the Sonolus developer, certain features **have been removed** from this project.  
-> Pre-built APKs are **no longer distributed**.
+> [!NOTE]
+> This fork restores the client-side features that were removed upstream, so the game stays usable for **offline, local single-player play** now that the official servers are gone. It only fills in the VIP / owned-theme state the client used to receive at login, inside your own process; no payment or server code is touched.
+>
+> **No pre-built APKs are distributed** — you need a legitimate copy of Sonolus and patch it yourself.
 
 # SonolusReverse
 
@@ -26,7 +27,9 @@ For announcements and support, join our community on Discord: [SonolusReverse Di
 ## Features
 
 - **Custom Settings Section**
+- **Offline User Info**: Restore the VIP / owned-theme state the client used to receive from the server at login.
 - **Version Spoof**: Override the version used by the client compatibility checks.
+- **Custom Themes**: Load your own theme JSON files from `CustomThemes/`.
 - **UwUify**: Make your game UwUified!
 - **Custom UI BGM**: Change the UI background music to your own!
 

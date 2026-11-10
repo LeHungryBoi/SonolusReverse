@@ -191,7 +191,8 @@ SonolusReverse/
 │   │   ├── data                        # Mod Config, constants, etc.
 │   │   │   ├── Config.ts
 │   │   │   ├── Constants.ts
-│   │   │   └── ModPreferences.ts
+│   │   │   ├── ModPreferences.ts
+│   │   │   └── ThemeLoader.ts
 │   │   ├── features                    # Features logic
 │   │   ├── i18n                        # Internationalization system
 │   │   │   ├── localization            # JSON Translations Files

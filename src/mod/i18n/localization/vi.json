@@ -2,6 +2,10 @@
     "ui": {
         "title": "SonolusReverse v{0}",
         "title_dev": "SonolusReverse v{0} - {1} ({2})",
+        "spoof": {
+            "title": "Giả mạo VIP và Chủ đề",
+            "description": "Giả mạo VIP và Chủ đề phía máy khách. Bạn cần mở lại cài đặt để cập nhật Chủ đề và VIP."
+        },
         "popup": {
             "ok": "OK"
         },
@@ -9,15 +13,16 @@
             "title": "Tắt tính năng kiểm tra phiên bản (trong Server)",
             "description": "Vô hiệu hóa kiểm tra tính tương thích của ứng dụng khi kết nối với máy chủ tùy chỉnh.\n\nCó thể gây ra hành vi không mong muốn, chẳng hạn như không thể gửi replay lên máy chủ tùy chỉnh."
         },
-        "uwuify": {
-            "title": "UwUify",
-            "description": "Chọn mức độ UwU hóa.\n\nĐược chuyển từ Untitled Charts, có thể gây ra một số hành vi không mong muốn.",
-            "options": {
-                "off": "Tắt",
-                "owo": "Nhẹ",
-                "uwu": "Nhiều",
-                "uvu": "Cực mạnh",
-                "max": "Tối đa"
+        "theme": {
+            "title": "Chủ đề tùy chỉnh",
+            "description": "Chủ đề màu sắc sẽ được sử dụng. Bạn đã tải {0} chủ đề tùy chỉnh.\n\nCác tệp chủ đề sẽ nằm tại: {1}\n\nBạn có thể tìm hiểu thêm về chủ đề tùy chỉnh tại đây: {2}",
+            "refresh_button": "Làm mới",
+            "import_button": "Nhập",
+            "select_button": "Chọn",
+            "popup": {
+                "message": "Mở lại cài đặt để xem các chủ đề mới.",
+                "message_error": "Không thể nhập chủ đề tùy chỉnh. Tệp bạn cung cấp không phải là chủ đề hợp lệ. Vui lòng xem hướng dẫn về định dạng chủ đề trên wiki.",
+                "ok": "OK"
             }
         },
         "bgm": {
@@ -28,6 +33,17 @@
             "popup": {
                 "success": "Đã nạp nhạc nền giao diện thành công!",
                 "reset": "Đã khôi phục nhạc nền giao diện về mặc định!"
+            }
+        },
+        "uwuify": {
+            "title": "UwUify",
+            "description": "Chọn mức độ UwU hóa.\n\nĐược chuyển từ Untitled Charts, có thể gây ra một số hành vi không mong muốn.",
+            "options": {
+                "off": "Tắt",
+                "owo": "Nhẹ",
+                "uwu": "Nhiều",
+                "uvu": "Cực mạnh",
+                "max": "Tối đa"
             }
         },
         "about": {

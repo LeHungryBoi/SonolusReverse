@@ -3,9 +3,12 @@ import "frida-il2cpp-bridge";
 import { AssemblyHelper } from "./engine/AssemblyHelper";
 import { Config } from "./mod/data/Config";
 import { ModPreferences } from "./mod/data/ModPreferences";
+import { ThemeLoader } from "./mod/data/ThemeLoader";
 import { CustomBgm } from "./mod/features/CustomBgm";
+import { CustomThemes } from "./mod/features/CustomThemes";
 import { TitleLabel } from "./mod/features/TitleLabel";
 import { UpdateChecker } from "./mod/features/UpdateChecker";
+import { UserInfoSpoof } from "./mod/features/UserInfoSpoof";
 import { Uwuify } from "./mod/features/Uwuify";
 import { VersionCheck } from "./mod/features/VersionCheck";
 import { I18n } from "./mod/i18n/I18n";
@@ -45,9 +48,12 @@ function initGame(): void {
 
 function initMod(): void {
     Config.load();
+    ThemeLoader.load();
     TitleLabel.init();
     VersionCheck.init();
     I18n.init();
+    UserInfoSpoof.init();
+    CustomThemes.init();
     CustomBgm.init();
     Uwuify.init();
     UpdateChecker.checkVersion();
